@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"] - MVC Admin</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+
+    <div class="layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-title">ADMIN</div>
+
+            <nav class="sidebar-nav">
+                <a href="/">Dashboard</a>
+                <a href="/Users">Users</a>
+                <a href="/Orders">Orders</a>
+                <a href="/Settings">Settings</a>
+            </nav>
+        </aside>
+
+        <!-- CONTENT -->
+        <main class="content">
+            @RenderBody()
+        </main>
+    </div>
+
+</body>
+</html>

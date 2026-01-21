@@ -1,0 +1,124 @@
+using Assignmen_PRN232__.Dto;
+using Assignmen_PRN232__.Dto.Common;
+using Assignmen_PRN232__.Models;
+using Assignmen_PRN232__.Repositories.IRepositories;
+using Assignmen_PRN232_1.DTOs.Common;
+using Assignmen_PRN232_1.Services.IServices;
+using Mapster;
+
+namespace Assignmen_PRN232_1.Services
+{
+    public class NewsArticleService : INewsArticleService
+    {
+        private readonly INewsArticleRepository _newsArticleRepository;
+
+        public NewsArticleService(INewsArticleRepository newsArticleRepository)
+        {
+            _newsArticleRepository = newsArticleRepository;
+        }
+
+        public async Task<ApiResponse<IEnumerable<NewsArticleDto>>> GetAllAsync()
+        {
+            var newsArticles = await _newsArticleRepository.GetAllAsync();
+
+            // Entity -> DTO
+            var result = newsArticles.Adapt<IEnumerable<NewsArticleDto>>();
+
+            return ApiResponse<IEnumerable<NewsArticleDto>>.Ok(result);
+        }
+
+        public async Task<ApiResponse<PagingResponse<NewsArticleDto>>> GetListPagingAsync(NewsArticleSearchDto dto)
+        {
+            var pagedData = await _newsArticleRepository.GetListPagingAsync(dto);
+
+            return ApiResponse<PagingResponse<NewsArticleDto>>.Ok(new PagingResponse<NewsArticleDto>
+            {
+                PageIndex = pagedData.PageIndex,
+                PageSize = pagedData.PageSize,
+                TotalRecords = pagedData.TotalRecords,
+                Items = pagedData.Items.Adapt<IEnumerable<NewsArticleDto>>()
+            });
+        }
+
+        public async Task<ApiResponse<NewsArticleDto>> GetByIdAsync(string id)
+        {
+            var newsArticle = await _newsArticleRepository.GetByIdAsync(id);
+            if (newsArticle == null)
+                return ApiResponse<NewsArticleDto>.Fail("News article not found");
+
+            return ApiResponse<NewsArticleDto>.Ok(newsArticle.Adapt<NewsArticleDto>());
+        }
+
+        /// <summary>
+        /// Router - Create hoặc Update dựa vào ID
+        /// </summary>
+        public async Task<ApiResponse<NewsArticleDto>> CreateOrEditAsync(NewsArticleSaveDto dto)
+        {
+            return string.IsNullOrEmpty(dto.NewsArticleId)
+                ? await CreateAsync(dto)
+                : await UpdateAsync(dto);
+        }
+
+        #region Private
+
+        private async Task<ApiResponse<NewsArticleDto>> CreateAsync(NewsArticleSaveDto dto)
+        {
+            // Tạo ID mới nếu không có
+            if (string.IsNullOrEmpty(dto.NewsArticleId))
+            {
+                dto.NewsArticleId = Guid.NewGuid().ToString();
+            }
+
+            // Kiểm tra xem ID đã tồn tại chưa
+            var exists = await _newsArticleRepository.ExistsByIdAsync(dto.NewsArticleId);
+            if (exists)
+                return ApiResponse<NewsArticleDto>.Fail("News article ID already exists");
+
+            // DTO -> Entity
+            var entity = dto.Adapt<NewsArticle>();
+            entity.CreatedDate = DateTime.Now;
+            entity.NewsStatus = entity.NewsStatus ?? true;
+
+            await _newsArticleRepository.AddAsync(entity);
+            await _newsArticleRepository.SaveChangesAsync();
+
+            return ApiResponse<NewsArticleDto>.Ok(
+                entity.Adapt<NewsArticleDto>(),
+                "Created successfully"
+            );
+        }
+
+        private async Task<ApiResponse<NewsArticleDto>> UpdateAsync(NewsArticleSaveDto dto)
+        {
+            var existing = await _newsArticleRepository.GetByIdAsync(dto.NewsArticleId);
+            if (existing == null)
+                return ApiResponse<NewsArticleDto>.Fail("News article not found");
+
+            // Mapster update object hiện tại
+            dto.Adapt(existing);
+            existing.ModifiedDate = DateTime.Now;
+
+            await _newsArticleRepository.UpdateAsync(existing);
+            await _newsArticleRepository.SaveChangesAsync();
+
+            return ApiResponse<NewsArticleDto>.Ok(
+                existing.Adapt<NewsArticleDto>(),
+                "Updated successfully"
+            );
+        }
+
+        #endregion
+
+        public async Task<ApiResponse<bool>> DeleteAsync(string id)
+        {
+            var newsArticle = await _newsArticleRepository.GetByIdAsync(id);
+            if (newsArticle == null)
+                return ApiResponse<bool>.Fail("News article not found");
+
+            await _newsArticleRepository.DeleteAsync(newsArticle);
+            await _newsArticleRepository.SaveChangesAsync();
+
+            return ApiResponse<bool>.Ok(true, "Deleted successfully");
+        }
+    }
+}

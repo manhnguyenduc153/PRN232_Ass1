@@ -22,6 +22,14 @@ namespace UsersApp.Extensions
             // Category Services
             services.AddTransient<ICategoryRepository, CategoryRepository>();
             services.AddScoped<ICategoryService, CategoryService>();
+
+            // NewsArticle Services
+            services.AddTransient<INewsArticleRepository, NewsArticleRepository>();
+            services.AddScoped<INewsArticleService, NewsArticleService>();
+
+            // SystemAccount Services
+            services.AddTransient<ISystemAccountRepository, SystemAccountRepository>();
+            services.AddScoped<ISystemAccountService, SystemAccountService>();
         }
     }
 }

@@ -1,0 +1,69 @@
+﻿/* RESET */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f0f2f5;
+}
+
+/* ========== LAYOUT ========== */
+.layout {
+    display: flex;
+    min-height: 100vh; /* PHỦ HẾT MÀN HÌNH */
+}
+
+/* ========== SIDEBAR ========== */
+.sidebar {
+    width: 240px;
+    background: #ffffff;
+    border-right: 1px solid #ddd;
+    padding: 20px 16px;
+}
+
+/* Sidebar title */
+.sidebar-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* Nav */
+.sidebar-nav a {
+    display: block;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    text-decoration: none;
+    color: #333;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+    .sidebar-nav a:hover {
+        background: #e6e6e6;
+    }
+
+/* ========== CONTENT ========== */
+.content {
+    flex: 1;
+    padding: 20px;
+    background: #ffffff;
+    overflow-y: auto;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+
+    .layout {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+    }
+}
