@@ -1,4 +1,4 @@
-﻿using Assignmen_PRN232__.Dto;
+using Assignmen_PRN232__.Dto;
 using Frontend.Services.IServices;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,39 +18,27 @@ namespace Frontend.Controllers
         {
             var searchDto = new TagSearchDto
             {
-                PageIndex = dto.PageIndex,
-                PageSize = dto.PageSize,
+                PageIndex = dto.PageIndex > 0 ? dto.PageIndex : 1,
+                PageSize = dto.PageSize > 0 ? dto.PageSize : 10,
                 Keyword = dto.Keyword
             };
 
             var result = await _tagService.GetListPagingAsync(searchDto);
 
             // Truyền thêm search params để giữ lại khi phân trang
-            ViewBag.CurrentPage = dto.PageIndex;
-            ViewBag.PageSize = dto.PageSize;
-            ViewBag.Keyword = dto.Keyword;
+            ViewBag.CurrentPage = searchDto.PageIndex;
+            ViewBag.PageSize = searchDto.PageSize;
+            ViewBag.Keyword = searchDto.Keyword;
             ViewBag.TotalPages = result.TotalPages;
             ViewBag.TotalRecords = result.TotalRecords;
 
             return View(result);
         }
 
-        // GET: Tag/Details/5
-        public async Task<IActionResult> Details(int id)
-        {
-            var tag = await _tagService.GetByIdAsync(id);
-            if (tag == null)
-            {
-                TempData["ErrorMessage"] = "Tag not found";
-                return RedirectToAction(nameof(Index));
-            }
-            return View(tag);
-        }
-
         // GET: Tag/Create
         public IActionResult Create()
         {
-            return View(new TagSaveDto());
+            return View("CreateEdit", new TagSaveDto());
         }
 
         // GET: Tag/Edit/5
@@ -80,7 +68,8 @@ namespace Frontend.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return View("CreateEdit", dto);
+                TempData["ErrorMessage"] = "Invalid input";
+                return RedirectToAction(nameof(Index));
             }
 
             var result = await _tagService.CreateOrEditAsync(dto);
@@ -88,11 +77,13 @@ namespace Frontend.Controllers
             if (result.Success)
             {
                 TempData["SuccessMessage"] = result.Message;
-                return RedirectToAction(nameof(Index));
+            }
+            else
+            {
+                TempData["ErrorMessage"] = result.Message;
             }
 
-            TempData["ErrorMessage"] = result.Message;
-            return View("CreateEdit", dto);
+            return RedirectToAction(nameof(Index));
         }
 
         // POST: Tag/Delete/5
@@ -120,7 +111,7 @@ namespace Frontend.Controllers
         {
             if (id.HasValue && id > 0)
             {
-                // Edit mode
+                // Edit mode - load data từ API
                 var tag = await _tagService.GetByIdAsync(id.Value);
                 if (tag == null)
                     return BadRequest("Tag not found");
@@ -136,45 +127,9 @@ namespace Frontend.Controllers
             }
             else
             {
-                // Create mode
+                // Create mode - form trống
                 return PartialView("_CreateEditForm", new TagSaveDto());
             }
-        }
-
-        // AJAX: Save tag (create/edit)
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SaveTag(TagSaveDto dto)
-        {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values.SelectMany(v => v.Errors);
-                return BadRequest(new { success = false, message = "Invalid input", errors });
-            }
-
-            var result = await _tagService.CreateOrEditAsync(dto);
-
-            if (result.Success)
-            {
-                return Ok(new { success = true, message = result.Message });
-            }
-
-            return BadRequest(new { success = false, message = result.Message });
-        }
-
-        // AJAX: Delete tag
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteTag(int id)
-        {
-            var result = await _tagService.DeleteAsync(id);
-
-            if (result.Success)
-            {
-                return Ok(new { success = true, message = result.Message });
-            }
-
-            return BadRequest(new { success = false, message = result.Message });
         }
     }
 }
