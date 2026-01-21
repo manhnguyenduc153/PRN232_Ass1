@@ -8,6 +8,7 @@ namespace Assignmen_PRN232__.Repositories.IRepositories
     {
         Task<IEnumerable<Tag>> GetAllAsync();
         Task<PagingResponse<Tag>> GetListPagingAsync(TagSearchDto searchDto);
+        Task<Tag?> GetByIdAsync<TKey>(TKey id) where TKey : notnull;
         Task<Tag?> GetByIdAsync(int id);
         Task<Tag> AddAsync(Tag tag);
         Task UpdateAsync(Tag tag);

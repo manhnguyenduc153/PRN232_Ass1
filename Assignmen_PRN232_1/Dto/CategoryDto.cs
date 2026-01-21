@@ -1,6 +1,7 @@
 ﻿using Assignmen_PRN232__.Models;
+using Assignmen_PRN232_1.DTOs.Common;
 
-namespace Assignmen_PRN232__.Dtos
+namespace Assignmen_PRN232__.Dto
 {
     public class CategoryDto
     {
@@ -28,5 +29,10 @@ namespace Assignmen_PRN232__.Dtos
         public short? ParentCategoryId { get; set; }
 
         public bool? IsActive { get; set; }
+    }
+
+    public class CategorySearchDto : BaseSearchDto
+    {
+        // Kế thừa: Keyword, Status, PageIndex, PageSize
     }
 }

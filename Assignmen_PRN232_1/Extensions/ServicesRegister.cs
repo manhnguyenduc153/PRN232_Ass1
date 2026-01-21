@@ -15,8 +15,13 @@ namespace UsersApp.Extensions
 
             services.AddScoped<IUnitOfWork, UnitOfWork<AppDbContext>>();
 
+            // Tag Services
             services.AddTransient<ITagRepository, TagRepository>();
             services.AddScoped<ITagService, TagService>();
+
+            // Category Services
+            services.AddTransient<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<ICategoryService, CategoryService>();
         }
     }
 }

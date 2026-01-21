@@ -1,4 +1,3 @@
-﻿//using Assignmen_PRN232__.Data;
 using Assignmen_PRN232__.Dto;
 using Assignmen_PRN232__.Models;
 using Assignmen_PRN232__.Repositories.IRepositories;
@@ -8,15 +7,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Assignmen_PRN232__.Repositories
 {
-    public class TagRepository
-    : BaseRepository<Tag, AppDbContext>, ITagRepository
+    public class CategoryRepository
+    : BaseRepository<Category, AppDbContext>, ICategoryRepository
     {
-        public TagRepository(AppDbContext context, IUnitOfWork unitOfWork)
+        public CategoryRepository(AppDbContext context, IUnitOfWork unitOfWork)
             : base(context, unitOfWork)
         {
         }
 
-        public async Task<PagingResponse<Tag>> GetListPagingAsync(TagSearchDto searchDto)
+        public async Task<PagingResponse<Category>> GetListPagingAsync(CategorySearchDto searchDto)
         {
             var query = FindAll(); // AsNoTracking
 
@@ -25,19 +24,24 @@ namespace Assignmen_PRN232__.Repositories
             {
                 var keyword = searchDto.Keyword.Trim();
                 query = query.Where(x =>
-                    x.TagName.Contains(keyword) ||
-                    (x.Note != null && x.Note.Contains(keyword)));
+                    x.CategoryName.Contains(keyword) ||
+                    (x.CategoryDesciption != null && x.CategoryDesciption.Contains(keyword)));
+            }
+
+            if (searchDto.Status.HasValue)
+            {
+                query = query.Where(x => x.IsActive == searchDto.Status.Value);
             }
 
             var totalRecords = await query.CountAsync();
 
             var items = await query
-                .OrderByDescending(x => x.TagId)
+                .OrderByDescending(x => x.CategoryId)
                 .Skip((searchDto.PageIndex - 1) * searchDto.PageSize)
                 .Take(searchDto.PageSize)
                 .ToListAsync();
 
-            return new PagingResponse<Tag>
+            return new PagingResponse<Category>
             {
                 PageIndex = searchDto.PageIndex,
                 PageSize = searchDto.PageSize,
@@ -46,13 +50,12 @@ namespace Assignmen_PRN232__.Repositories
             };
         }
 
-        public async Task<bool> ExistsByNameAsync(string tagName)
+        public async Task<bool> ExistsByNameAsync(string categoryName)
         {
-            return await ExistsAsync(t => t.TagName == tagName);
+            return await ExistsAsync(c => c.CategoryName == categoryName);
         }
 
-        // Explicit implementation cho int GetById
-        public Task<Tag?> GetByIdAsync(int id) => GetByIdAsync<int>(id);
+        // Explicit implementation cho short GetById
+        public Task<Category?> GetByIdAsync(short id) => GetByIdAsync<short>(id);
     }
-
 }
