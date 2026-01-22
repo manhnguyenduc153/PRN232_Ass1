@@ -20,6 +20,9 @@ namespace UsersApp.Extensions
             
             //SystemAccount Services
             services.AddHttpClient<ISystemAccountService, SystemAccountService>();
+
+            //Login Services
+            services.AddHttpClient<ILoginService, LoginService>();
         }
     }
 }

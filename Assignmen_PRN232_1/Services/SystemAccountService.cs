@@ -169,15 +169,23 @@ namespace Assignmen_PRN232_1.Services
         {
             var email = _configuration["DefaultAdmin:AccountEmail"];
             var password = _configuration["DefaultAdmin:AccountPassword"];
-            var role = _configuration["DefaultAdmin:AccountRole"];
+            var roleStr = _configuration["DefaultAdmin:AccountRole"];
+
+            if (string.IsNullOrWhiteSpace(email) ||
+                string.IsNullOrWhiteSpace(password) ||
+                !int.TryParse(roleStr, out int role))
+            {
+                throw new Exception("Default admin configuration is missing or invalid");
+            }
 
             return new DefaultAdminConfig
             {
                 Email = email,
                 Password = password,
-                Role = int.Parse(role),
+                Role = role
             };
         }
+
 
         #endregion
 
