@@ -1,0 +1,52 @@
+@model Assignmen_PRN232__.Dto.SystemAccountSaveDto
+
+<!-- AccountId (hidden) -->
+<input type="hidden" name="AccountId" value="@Model.AccountId" />
+
+<div class="modal-body">
+    <!-- Account Name -->
+    <div class="mb-3">
+        <label for="accountName" class="form-label">Account Name <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="accountName" name="AccountName" 
+               value="@Model.AccountName" required 
+               placeholder="Enter account name">
+    </div>
+
+    <!-- Account Email -->
+    <div class="mb-3">
+        <label for="accountEmail" class="form-label">Email <span class="text-danger">*</span></label>
+        <input type="email" class="form-control" id="accountEmail" name="AccountEmail" 
+               value="@Model.AccountEmail" required 
+               placeholder="Enter email address">
+    </div>
+
+    <!-- Account Role -->
+    <div class="mb-3">
+        <label for="accountRole" class="form-label">Role <span class="text-danger">*</span></label>
+        <select class="form-select" id="accountRole" name="AccountRole" required>
+            <option value="">-- Select Role --</option>
+            <option value="0" selected="@(Model.AccountRole == 0)">Admin</option>
+            <option value="1" selected="@(Model.AccountRole == 1)">Moderator</option>
+            <option value="2" selected="@(Model.AccountRole == 2)">User</option>
+        </select>
+    </div>
+
+    <!-- Account Password (only for create) -->
+    @if (Model.AccountId == 0)
+    {
+        <div class="mb-3">
+            <label for="accountPassword" class="form-label">Password <span class="text-danger">*</span></label>
+            <input type="password" class="form-control" id="accountPassword" name="AccountPassword" 
+                   required 
+                   placeholder="Enter password">
+            <small class="form-text text-muted">Password is required for new accounts</small>
+        </div>
+    }
+</div>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+    <button type="submit" class="btn btn-primary" form="systemAccountForm">
+        <i class="bi bi-save"></i> @(Model.AccountId > 0 ? "Update" : "Create")
+    </button>
+</div>

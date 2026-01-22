@@ -26,6 +26,10 @@ namespace UsersApp.Extensions
             // NewsArticle Services
             services.AddTransient<INewsArticleRepository, NewsArticleRepository>();
             services.AddScoped<INewsArticleService, NewsArticleService>();
+
+            // NewsArticle Services
+            services.AddTransient<ISystemAccountRepository, SystemAccountRepository>();
+            services.AddScoped<ISystemAccountService, SystemAccountService>();
         }
     }
 }

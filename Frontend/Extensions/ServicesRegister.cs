@@ -17,6 +17,9 @@ namespace UsersApp.Extensions
             
             //NewsArticle Services
             services.AddHttpClient<INewsArticleService, NewsArticleService>();
+            
+            //SystemAccount Services
+            services.AddHttpClient<ISystemAccountService, SystemAccountService>();
         }
     }
 }
