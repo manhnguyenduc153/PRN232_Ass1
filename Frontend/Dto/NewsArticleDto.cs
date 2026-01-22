@@ -29,15 +29,17 @@ namespace Assignmen_PRN232__.Dto
         public short? UpdatedById { get; set; }
 
         public DateTime? ModifiedDate { get; set; }
+
+        public List<TagDto> Tags { get; set; } = new List<TagDto>();
     }
 
     public class NewsArticleSaveDto
     {
-        public string NewsArticleId { get; set; }
+        public string? NewsArticleId { get; set; }
 
         public string? NewsTitle { get; set; }
 
-        public string Headline { get; set; } = null!;
+        public string? Headline { get; set; }
 
         public DateTime? CreatedDate { get; set; }
 

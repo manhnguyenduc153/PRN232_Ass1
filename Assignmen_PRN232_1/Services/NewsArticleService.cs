@@ -11,10 +11,12 @@ namespace Assignmen_PRN232_1.Services
     public class NewsArticleService : INewsArticleService
     {
         private readonly INewsArticleRepository _newsArticleRepository;
+        private readonly ITagRepository _tagRepository;
 
-        public NewsArticleService(INewsArticleRepository newsArticleRepository)
+        public NewsArticleService(INewsArticleRepository newsArticleRepository, ITagRepository tagRepository)
         {
             _newsArticleRepository = newsArticleRepository;
+            _tagRepository = tagRepository;
         }
 
         public async Task<IEnumerable<NewsArticleDto>> GetAllAsync()
@@ -98,12 +100,31 @@ namespace Assignmen_PRN232_1.Services
 
         #region Private
 
+        /// <summary>
+        /// Generate random string ID for NewsArticle
+        /// Format: NA + 12 random alphanumeric characters
+        /// Example: NA_ABC123XYZ456
+        /// </summary>
+        private string GenerateNewsArticleId()
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            var random = new Random();
+            var result = "NA_" + new string(Enumerable.Range(0, 12)
+                .Select(_ => chars[random.Next(chars.Length)])
+                .ToArray());
+            return result;
+        }
+
         private async Task<ApiResponse<NewsArticleDto>> CreateAsync(NewsArticleSaveDto dto)
         {
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(dto.Headline))
+                return ApiResponse<NewsArticleDto>.Fail("Headline is required");
+
             // Tạo ID mới nếu không có
             if (string.IsNullOrEmpty(dto.NewsArticleId))
             {
-                dto.NewsArticleId = Guid.NewGuid().ToString();
+                dto.NewsArticleId = GenerateNewsArticleId();
             }
 
             // Kiểm tra xem ID đã tồn tại chưa
@@ -127,6 +148,13 @@ namespace Assignmen_PRN232_1.Services
 
         private async Task<ApiResponse<NewsArticleDto>> UpdateAsync(NewsArticleSaveDto dto)
         {
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(dto.NewsArticleId))
+                return ApiResponse<NewsArticleDto>.Fail("News article ID is required for update");
+
+            if (string.IsNullOrWhiteSpace(dto.Headline))
+                return ApiResponse<NewsArticleDto>.Fail("Headline is required");
+
             var existing = await _newsArticleRepository.GetByIdAsync(dto.NewsArticleId);
             if (existing == null)
                 return ApiResponse<NewsArticleDto>.Fail("News article not found");
@@ -169,8 +197,11 @@ namespace Assignmen_PRN232_1.Services
             if (newsArticle.Tags.Any(x => x.TagId == tagId))
                 return ApiResponse<bool>.Fail("Tag already added to this article");
 
-            // Tạo tag object để thêm vào relationship
-            var tag = new Tag { TagId = tagId };
+            // QUAN TRỌNG: Phải load Tag từ database, không tạo object mới
+            var tag = await _tagRepository.GetByIdAsync(tagId);
+            if (tag == null)
+                return ApiResponse<bool>.Fail("Tag not found");
+
             newsArticle.Tags.Add(tag);
 
             await _newsArticleRepository.UpdateAsync(newsArticle);

@@ -14,6 +14,9 @@ namespace UsersApp.Extensions
             
             //Category Services
             services.AddHttpClient<ICategoryService, CategoryService>();
+            
+            //NewsArticle Services
+            services.AddHttpClient<INewsArticleService, NewsArticleService>();
         }
     }
 }

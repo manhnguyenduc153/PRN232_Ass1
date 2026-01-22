@@ -36,11 +36,11 @@ namespace Assignmen_PRN232__.Dto
 
     public class NewsArticleSaveDto
     {
-        public string NewsArticleId { get; set; }
+        public string? NewsArticleId { get; set; }
 
         public string? NewsTitle { get; set; }
 
-        public string Headline { get; set; } = null!;
+        public string? Headline { get; set; }
 
         public DateTime? CreatedDate { get; set; }
 

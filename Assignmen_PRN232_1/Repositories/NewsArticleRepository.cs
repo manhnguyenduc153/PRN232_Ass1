@@ -19,6 +19,7 @@ namespace Assignmen_PRN232__.Repositories
         {
             // Use AsNoTracking vì đây là read-only operation
             var query = _dbContext.Set<NewsArticle>()
+                .Include(x => x.Category)
                 .Include(x => x.Tags)
                 .AsNoTracking();
 
