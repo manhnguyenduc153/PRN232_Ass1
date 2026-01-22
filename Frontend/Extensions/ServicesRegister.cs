@@ -10,7 +10,10 @@ namespace UsersApp.Extensions
         public static void RegisterCustomServices(this IServiceCollection services)
         {
             //Tag Services
-            services.AddScoped<ITagService, TagService>();
+            services.AddHttpClient<ITagService, TagService>();
+            
+            //Category Services
+            services.AddHttpClient<ICategoryService, CategoryService>();
         }
     }
 }

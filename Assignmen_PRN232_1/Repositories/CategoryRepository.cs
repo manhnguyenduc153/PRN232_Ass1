@@ -4,6 +4,7 @@ using Assignmen_PRN232__.Repositories.IRepositories;
 using Assignmen_PRN232_1.Data;
 using Assignmen_PRN232_1.DTOs.Common;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace Assignmen_PRN232__.Repositories
 {
@@ -15,9 +16,9 @@ namespace Assignmen_PRN232__.Repositories
         {
         }
 
-        public async Task<PagingResponse<Category>> GetListPagingAsync(CategorySearchDto searchDto)
+        public async Task<PagingResponse<CategoryDto>> GetListPagingAsync(CategorySearchDto searchDto)
         {
-            var query = FindAll(); // AsNoTracking
+            var query = FindAll();
 
             // 🔍 Search theo Keyword
             if (!string.IsNullOrWhiteSpace(searchDto.Keyword))
@@ -35,13 +36,28 @@ namespace Assignmen_PRN232__.Repositories
 
             var totalRecords = await query.CountAsync();
 
+            // Self-join using GroupJoin to get parent category name
             var items = await query
                 .OrderByDescending(x => x.CategoryId)
                 .Skip((searchDto.PageIndex - 1) * searchDto.PageSize)
                 .Take(searchDto.PageSize)
+                .GroupJoin(
+                    FindAll(),
+                    c => c.ParentCategoryId,
+                    p => p.CategoryId,
+                    (c, parents) => new CategoryDto
+                    {
+                        CategoryId = c.CategoryId,
+                        CategoryName = c.CategoryName,
+                        CategoryDesciption = c.CategoryDesciption,
+                        ParentCategoryId = c.ParentCategoryId,
+                        ParentCategoryName = parents.Select(p => p.CategoryName).FirstOrDefault(),
+                        IsActive = c.IsActive
+                    }
+                )
                 .ToListAsync();
 
-            return new PagingResponse<Category>
+            return new PagingResponse<CategoryDto>
             {
                 PageIndex = searchDto.PageIndex,
                 PageSize = searchDto.PageSize,

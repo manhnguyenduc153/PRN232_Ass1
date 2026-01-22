@@ -36,7 +36,7 @@ namespace Assignmen_PRN232_1.Services
                 PageIndex = pagedData.PageIndex,
                 PageSize = pagedData.PageSize,
                 TotalRecords = pagedData.TotalRecords,
-                Items = pagedData.Items.Adapt<IEnumerable<CategoryDto>>()
+                Items = pagedData.Items
             };
         }
 
