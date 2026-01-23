@@ -63,7 +63,11 @@ namespace Assignmen_PRN232_1.Services
 
         private async Task<ApiResponse<TagDto>> CreateAsync(TagSaveDto dto)
         {
-            // DTO -> Entity
+            // Kiểm tra trùng TagName
+            var exists = await _tagRepository.ExistsByNameAsync(dto.TagName!);
+            if (exists)
+                return ApiResponse<TagDto>.Fail("Tag name already exists");
+
             var entity = dto.Adapt<Tag>();
 
             await _tagRepository.AddAsync(entity);
@@ -81,7 +85,11 @@ namespace Assignmen_PRN232_1.Services
             if (existing == null)
                 return ApiResponse<TagDto>.Fail("Tag not found");
 
-            // Mapster update object hiện tại
+            // Kiểm tra trùng TagName (trừ chính nó)
+            var duplicateExists = await _tagRepository.ExistsByNameAsync(dto.TagName!);
+            if (duplicateExists && existing.TagName != dto.TagName)
+                return ApiResponse<TagDto>.Fail("Tag name already exists");
+
             dto.Adapt(existing);
 
             await _tagRepository.UpdateAsync(existing);
@@ -100,6 +108,10 @@ namespace Assignmen_PRN232_1.Services
             var tag = await _tagRepository.GetByIdAsync(id);
             if (tag == null)
                 return ApiResponse<bool>.Fail("Tag not found");
+
+            // Kiểm tra tag có đang được dùng trong NewsArticle không
+            if (tag.NewsArticles != null && tag.NewsArticles.Any())
+                return ApiResponse<bool>.Fail("Cannot delete tag that is being used in news articles");
 
             await _tagRepository.DeleteAsync(tag);
             await _tagRepository.SaveChangesAsync();

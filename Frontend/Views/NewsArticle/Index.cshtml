@@ -3,11 +3,16 @@
 @model Assignmen_PRN232_1.DTOs.Common.PagingResponse<NewsArticleDto>
 
 @{
-    ViewData["Title"] = "News Article Management";
+    ViewData["PageTitle"] = "News Article Management";
     var currentPage = ViewBag.CurrentPage ?? 1;
     var pageSize = ViewBag.PageSize ?? 10;
     var keyword = ViewBag.Keyword ?? "";
+    var title = ViewBag.Title ?? "";
+    var author = ViewBag.Author ?? "";
     var categoryId = ViewBag.CategoryId ?? 0;
+    var status = ViewBag.Status;
+    var fromDate = ViewBag.FromDate;
+    var toDate = ViewBag.ToDate;
     var totalPages = ViewBag.TotalPages ?? 1;
     var totalRecords = ViewBag.TotalRecords ?? 0;
     var categories = (List<CategoryDto>?)ViewBag.Categories ?? new List<CategoryDto>();
@@ -48,17 +53,29 @@
         <div class="card-body">
             <form asp-action="Index" method="get" class="row g-3">
                 <div class="col-md-3">
-                    <label class="form-label">Search</label>
-                    <input type="text" name="keyword" value="@keyword" class="form-control" placeholder="Search by title, headline...">
+                    <label class="form-label">Title</label>
+                    <input type="text" name="title" value="@title" class="form-control" placeholder="Search by title">
                 </div>
                 <div class="col-md-3">
+                    <label class="form-label">Author</label>
+                    <input type="text" name="author" value="@author" class="form-control" placeholder="Search by author">
+                </div>
+                <div class="col-md-2">
                     <label class="form-label">Category</label>
                     <select name="categoryId" class="form-select">
-                        <option value="0">All Categories</option>
+                        <option value="0">All</option>
                         @foreach (var cat in categories)
                         {
                             <option value="@cat.CategoryId" selected="@(categoryId == cat.CategoryId)">@cat.CategoryName</option>
                         }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">All</option>
+                        <option value="true" selected="@(status == true)">Active</option>
+                        <option value="false" selected="@(status == false)">Inactive</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -70,7 +87,15 @@
                         <option value="50" selected="@(pageSize == 50)">50</option>
                     </select>
                 </div>
-                <div class="col-md-4 d-flex align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">From Date</label>
+                    <input type="date" name="fromDate" value="@(fromDate?.ToString("yyyy-MM-dd"))" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">To Date</label>
+                    <input type="date" name="toDate" value="@(toDate?.ToString("yyyy-MM-dd"))" class="form-control">
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary me-2">
                         <i class="bi bi-search"></i> Search
                     </button>
@@ -96,12 +121,12 @@
                             <tr>
                                 <th style="width: 8%">ID</th>
                                 <th style="width: 12%">Title</th>
-                                <th style="width: 12%">Headline</th>
+                                <th style="width: 10%">Author</th>
                                 <th style="width: 10%">Category</th>
-                                <th style="width: 18%">Tags</th>
+                                <th style="width: 10%">Created By</th>
                                 <th style="width: 10%">Created Date</th>
                                 <th style="width: 8%">Status</th>
-                                <th style="width: 12%" class="text-center">Actions</th>
+                                <th style="width: 15%" class="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -114,40 +139,11 @@
                                     <td>
                                         <span class="badge bg-info text-dark">@(item.NewsTitle ?? "N/A")</span>
                                     </td>
-                                    <td>@(item.Headline ?? "")</td>
+                                    <td>@(item.NewsSource ?? "")</td>
                                     <td>
                                         @(item.CategoryName ?? "N/A")
                                     </td>
-                                    <td>
-                                        @if (item.Tags != null && item.Tags.Any())
-                                        {
-                                            <div class="d-flex flex-wrap gap-1">
-                                                @foreach (var tag in item.Tags)
-                                                {
-                                                    <span class="badge bg-secondary position-relative" style="padding-right: 20px;">
-                                                        @tag.TagName
-                                                        <button type="button" class="btn-close btn-close-white" style="position: absolute; right: 2px; top: 2px; width: 14px; height: 14px;" 
-                                                                onclick="removeTag('@item.NewsArticleId', @tag.TagId)" title="Remove tag"></button>
-                                                    </span>
-                                                }
-                                                <button type="button" class="btn btn-sm btn-outline-secondary" 
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#addTagModal"
-                                                        onclick="loadAddTagForm('@item.NewsArticleId')">
-                                                    <i class="bi bi-plus"></i>
-                                                </button>
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" 
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#addTagModal"
-                                                    onclick="loadAddTagForm('@item.NewsArticleId')">
-                                                <i class="bi bi-plus"></i> Add Tag
-                                            </button>
-                                        }
-                                    </td>
+                                    <td>@(item.CreatedByName ?? "N/A")</td>
                                     <td>
                                         @(item.CreatedDate?.ToString("dd/MM/yyyy") ?? "")
                                     </td>
@@ -170,8 +166,15 @@
                                                     title="Edit">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
+                                            <form method="post" asp-action="Duplicate" asp-route-id="@item.NewsArticleId" style="display:inline;">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-info" title="Duplicate">
+                                                    <i class="bi bi-files"></i>
+                                                </button>
+                                            </form>
                                             <form method="post" asp-action="Delete" asp-route-id="@item.NewsArticleId" style="display:inline;" 
                                                   onsubmit="return confirm('Delete &quot;@item.NewsTitle&quot;?');">
+                                                @Html.AntiForgeryToken()
                                                 <button type="submit" class="btn btn-sm btn-danger" title="Delete">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
@@ -209,8 +212,12 @@
                        asp-action="Index" 
                        asp-route-pageIndex="@(currentPage - 1)" 
                        asp-route-pageSize="@pageSize" 
-                       asp-route-keyword="@keyword"
-                       asp-route-categoryId="@categoryId">
+                       asp-route-title="@title"
+                       asp-route-author="@author"
+                       asp-route-categoryId="@categoryId"
+                       asp-route-status="@status"
+                       asp-route-fromDate="@fromDate"
+                       asp-route-toDate="@toDate">
                         <i class="bi bi-chevron-left"></i> Previous
                     </a>
                 </li>
@@ -227,8 +234,12 @@
                                asp-action="Index" 
                                asp-route-pageIndex="1" 
                                asp-route-pageSize="@pageSize" 
-                               asp-route-keyword="@keyword"
-                               asp-route-categoryId="@categoryId">1</a>
+                               asp-route-title="@title"
+                               asp-route-author="@author"
+                               asp-route-categoryId="@categoryId"
+                               asp-route-status="@status"
+                               asp-route-fromDate="@fromDate"
+                               asp-route-toDate="@toDate">1</a>
                         </li>
                         if (startPage > 2)
                         {
@@ -243,8 +254,12 @@
                                asp-action="Index" 
                                asp-route-pageIndex="@i" 
                                asp-route-pageSize="@pageSize" 
-                               asp-route-keyword="@keyword"
-                               asp-route-categoryId="@categoryId">@i</a>
+                               asp-route-title="@title"
+                               asp-route-author="@author"
+                               asp-route-categoryId="@categoryId"
+                               asp-route-status="@status"
+                               asp-route-fromDate="@fromDate"
+                               asp-route-toDate="@toDate">@i</a>
                         </li>
                     }
 
@@ -259,8 +274,12 @@
                                asp-action="Index" 
                                asp-route-pageIndex="@totalPages" 
                                asp-route-pageSize="@pageSize" 
-                               asp-route-keyword="@keyword"
-                               asp-route-categoryId="@categoryId">@totalPages</a>
+                               asp-route-title="@title"
+                               asp-route-author="@author"
+                               asp-route-categoryId="@categoryId"
+                               asp-route-status="@status"
+                               asp-route-fromDate="@fromDate"
+                               asp-route-toDate="@toDate">@totalPages</a>
                         </li>
                     }
                 }
@@ -271,8 +290,12 @@
                        asp-action="Index" 
                        asp-route-pageIndex="@(currentPage + 1)" 
                        asp-route-pageSize="@pageSize" 
-                       asp-route-keyword="@keyword"
-                       asp-route-categoryId="@categoryId">
+                       asp-route-title="@title"
+                       asp-route-author="@author"
+                       asp-route-categoryId="@categoryId"
+                       asp-route-status="@status"
+                       asp-route-fromDate="@fromDate"
+                       asp-route-toDate="@toDate">
                         Next <i class="bi bi-chevron-right"></i>
                     </a>
                 </li>

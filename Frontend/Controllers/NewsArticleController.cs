@@ -25,19 +25,27 @@ namespace Frontend.Controllers
                 PageIndex = dto.PageIndex > 0 ? dto.PageIndex : 1,
                 PageSize = dto.PageSize > 0 ? dto.PageSize : 10,
                 Keyword = dto.Keyword,
-                CategoryId = dto.CategoryId
+                Title = dto.Title,
+                Author = dto.Author,
+                CategoryId = dto.CategoryId,
+                Status = dto.Status,
+                FromDate = dto.FromDate,
+                ToDate = dto.ToDate
             };
 
             var result = await _newsArticleService.GetListPagingAsync(searchDto);
 
-            // Load categories for filter
             ViewBag.Categories = await _categoryService.GetAllAsync();
 
-            // Truyền thêm search params để giữ lại khi phân trang
             ViewBag.CurrentPage = searchDto.PageIndex;
             ViewBag.PageSize = searchDto.PageSize;
             ViewBag.Keyword = searchDto.Keyword;
+            ViewBag.Title = searchDto.Title;
+            ViewBag.Author = searchDto.Author;
             ViewBag.CategoryId = searchDto.CategoryId;
+            ViewBag.Status = searchDto.Status;
+            ViewBag.FromDate = searchDto.FromDate;
+            ViewBag.ToDate = searchDto.ToDate;
             ViewBag.TotalPages = result.TotalPages;
             ViewBag.TotalRecords = result.TotalRecords;
 
@@ -187,6 +195,23 @@ namespace Frontend.Controllers
         {
             var result = await _newsArticleService.RemoveTagAsync(id, tagId);
             return Json(new { success = result.Success, message = result.Message });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Duplicate(string id)
+        {
+            var result = await _newsArticleService.DuplicateAsync(id);
+
+            if (result.Success)
+            {
+                TempData["SuccessMessage"] = result.Message;
+            }
+            else
+            {
+                TempData["ErrorMessage"] = result.Message;
+            }
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }

@@ -17,37 +17,59 @@ namespace Assignmen_PRN232__.Repositories
 
         public async Task<PagingResponse<NewsArticle>> GetListPagingAsync(NewsArticleSearchDto searchDto)
         {
-            // Use AsNoTracking vì đây là read-only operation
             var query = _dbContext.Set<NewsArticle>()
                 .Include(x => x.Category)
                 .Include(x => x.Tags)
+                .Include(x => x.CreatedBy)
                 .AsNoTracking();
 
-            // 🔍 Search theo Keyword
+            // Search theo Title
+            if (!string.IsNullOrWhiteSpace(searchDto.Title))
+            {
+                query = query.Where(x => x.NewsTitle.Contains(searchDto.Title));
+            }
+
+            // Search theo Author (CreatedBy.AccountName)
+            if (!string.IsNullOrWhiteSpace(searchDto.Author))
+            {
+                query = query.Where(x => x.CreatedBy != null && x.CreatedBy.AccountName.Contains(searchDto.Author));
+            }
+
+            // Search theo Keyword
             if (!string.IsNullOrWhiteSpace(searchDto.Keyword))
             {
                 var keyword = searchDto.Keyword.Trim();
                 query = query.Where(x =>
                     x.NewsTitle.Contains(keyword) ||
                     x.Headline.Contains(keyword) ||
-                    (x.NewsContent != null && x.NewsContent.Contains(keyword)) ||
-                    (x.NewsSource != null && x.NewsSource.Contains(keyword)));
+                    (x.NewsContent != null && x.NewsContent.Contains(keyword)));
             }
 
-            // 🔍 Search theo CategoryId
+            // Filter theo CategoryId
             if (searchDto.CategoryId.HasValue && searchDto.CategoryId > 0)
             {
                 query = query.Where(x => x.CategoryId == searchDto.CategoryId);
             }
 
-            // 🔍 Search theo Status
+            // Filter theo Status
             if (searchDto.Status.HasValue)
             {
                 query = query.Where(x => x.NewsStatus == searchDto.Status);
             }
 
+            // Filter theo Date range
+            if (searchDto.FromDate.HasValue)
+            {
+                query = query.Where(x => x.CreatedDate >= searchDto.FromDate);
+            }
+            if (searchDto.ToDate.HasValue)
+            {
+                query = query.Where(x => x.CreatedDate <= searchDto.ToDate);
+            }
+
             var totalRecords = await query.CountAsync();
 
+            // Sort DESC theo CreatedDate
             var items = await query
                 .OrderByDescending(x => x.CreatedDate)
                 .Skip((searchDto.PageIndex - 1) * searchDto.PageSize)
@@ -73,6 +95,7 @@ namespace Assignmen_PRN232__.Repositories
         {
             return await _dbContext.Set<NewsArticle>()
                 .Include(x => x.Tags)
+                .Include(x => x.CreatedBy)
                 .FirstOrDefaultAsync(x => x.NewsArticleId == id);
         }
     }

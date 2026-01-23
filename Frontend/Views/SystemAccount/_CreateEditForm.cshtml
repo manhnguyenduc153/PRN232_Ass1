@@ -1,26 +1,24 @@
 @model Assignmen_PRN232__.Dto.SystemAccountSaveDto
 
-<!-- AccountId (hidden) -->
 <input type="hidden" name="AccountId" value="@Model.AccountId" />
 
 <div class="modal-body">
-    <!-- Account Name -->
     <div class="mb-3">
         <label for="accountName" class="form-label">Account Name <span class="text-danger">*</span></label>
         <input type="text" class="form-control" id="accountName" name="AccountName" 
-               value="@Model.AccountName" required 
+               value="@Model.AccountName" required maxlength="100"
                placeholder="Enter account name">
+        <span asp-validation-for="AccountName" class="text-danger"></span>
     </div>
 
-    <!-- Account Email -->
     <div class="mb-3">
         <label for="accountEmail" class="form-label">Email <span class="text-danger">*</span></label>
         <input type="email" class="form-control" id="accountEmail" name="AccountEmail" 
-               value="@Model.AccountEmail" required 
+               value="@Model.AccountEmail" required maxlength="100"
                placeholder="Enter email address">
+        <span asp-validation-for="AccountEmail" class="text-danger"></span>
     </div>
 
-    <!-- Account Role -->
     <div class="mb-3">
         <label for="accountRole" class="form-label">Role <span class="text-danger">*</span></label>
         <select class="form-select" id="accountRole" name="AccountRole" required>
@@ -29,17 +27,18 @@
             <option value="1" selected="@(Model.AccountRole == 1)">Moderator</option>
             <option value="2" selected="@(Model.AccountRole == 2)">User</option>
         </select>
+        <span asp-validation-for="AccountRole" class="text-danger"></span>
     </div>
 
-    <!-- Account Password (only for create) -->
     @if (Model.AccountId == 0)
     {
         <div class="mb-3">
             <label for="accountPassword" class="form-label">Password <span class="text-danger">*</span></label>
             <input type="password" class="form-control" id="accountPassword" name="AccountPassword" 
-                   required 
+                   required minlength="6" maxlength="100"
                    placeholder="Enter password">
-            <small class="form-text text-muted">Password is required for new accounts</small>
+            <small class="form-text text-muted">Password must be between 6 and 100 characters</small>
+            <span asp-validation-for="AccountPassword" class="text-danger"></span>
         </div>
     }
 </div>

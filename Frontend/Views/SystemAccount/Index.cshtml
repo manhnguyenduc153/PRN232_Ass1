@@ -254,22 +254,24 @@
 </div>
 
 @section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
     <script>
-        // Load Create Form (trống)
         function loadCreateForm() {
             $('#modalTitle').text('Create New System Account');
             $.get('@Url.Action("GetCreateEditForm", "SystemAccount")', function(html) {
                 $('#modalBody').html(html);
+                $.validator.unobtrusive.parse('#systemAccountForm');
             }).fail(function() {
                 alert('Error loading form');
             });
         }
 
-        // Load Edit Form (với data)
         function loadEditForm(id) {
             $('#modalTitle').text('Edit System Account');
             $.get('@Url.Action("GetCreateEditForm", "SystemAccount")', { id: id }, function(html) {
                 $('#modalBody').html(html);
+                $.validator.unobtrusive.parse('#systemAccountForm');
             }).fail(function() {
                 alert('Error loading form');
             });

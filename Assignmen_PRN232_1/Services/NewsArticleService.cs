@@ -12,11 +12,13 @@ namespace Assignmen_PRN232_1.Services
     {
         private readonly INewsArticleRepository _newsArticleRepository;
         private readonly ITagRepository _tagRepository;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public NewsArticleService(INewsArticleRepository newsArticleRepository, ITagRepository tagRepository)
+        public NewsArticleService(INewsArticleRepository newsArticleRepository, ITagRepository tagRepository, IHttpContextAccessor httpContextAccessor)
         {
             _newsArticleRepository = newsArticleRepository;
             _tagRepository = tagRepository;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<IEnumerable<NewsArticleDto>> GetAllAsync()
@@ -47,6 +49,7 @@ namespace Assignmen_PRN232_1.Services
                 CategoryName = na.Category?.CategoryName,
                 NewsStatus = na.NewsStatus,
                 CreatedById = na.CreatedById,
+                CreatedByName = na.CreatedBy?.AccountName,
                 UpdatedById = na.UpdatedById,
                 ModifiedDate = na.ModifiedDate,
                 Tags = na.Tags.Adapt<ICollection<TagDto>>()
@@ -57,6 +60,40 @@ namespace Assignmen_PRN232_1.Services
                 PageIndex = pagedData.PageIndex,
                 PageSize = pagedData.PageSize,
                 TotalRecords = pagedData.TotalRecords,
+                Items = items
+            };
+        }
+
+        public async Task<PagingResponse<NewsArticleDto>> GetPublicListPagingAsync(NewsArticleSearchDto dto)
+        {
+            var pagedData = await _newsArticleRepository.GetListPagingAsync(dto);
+
+            var items = pagedData.Items
+                .Where(na => na.Category != null && na.Category.IsActive == true)
+                .Select(na => new NewsArticleDto
+                {
+                    NewsArticleId = na.NewsArticleId,
+                    NewsArticleName = na.NewsArticleId,
+                    NewsTitle = na.NewsTitle,
+                    Headline = na.Headline,
+                    CreatedDate = na.CreatedDate,
+                    NewsContent = na.NewsContent,
+                    NewsSource = na.NewsSource,
+                    CategoryId = na.CategoryId,
+                    CategoryName = na.Category?.CategoryName,
+                    NewsStatus = na.NewsStatus,
+                    CreatedById = na.CreatedById,
+                    CreatedByName = na.CreatedBy != null ? na.CreatedBy.AccountName : null,
+                    UpdatedById = na.UpdatedById,
+                    ModifiedDate = na.ModifiedDate,
+                    Tags = na.Tags.Adapt<ICollection<TagDto>>()
+                }).ToList();
+
+            return new PagingResponse<NewsArticleDto>
+            {
+                PageIndex = pagedData.PageIndex,
+                PageSize = pagedData.PageSize,
+                TotalRecords = items.Count,
                 Items = items
             };
         }
@@ -80,6 +117,7 @@ namespace Assignmen_PRN232_1.Services
                 CategoryName = newsArticle.Category?.CategoryName,
                 NewsStatus = newsArticle.NewsStatus,
                 CreatedById = newsArticle.CreatedById,
+                CreatedByName = newsArticle.CreatedBy?.AccountName,
                 UpdatedById = newsArticle.UpdatedById,
                 ModifiedDate = newsArticle.ModifiedDate,
                 Tags = newsArticle.Tags.Adapt<ICollection<TagDto>>()
@@ -117,25 +155,28 @@ namespace Assignmen_PRN232_1.Services
 
         private async Task<ApiResponse<NewsArticleDto>> CreateAsync(NewsArticleSaveDto dto)
         {
-            // Validate required fields
             if (string.IsNullOrWhiteSpace(dto.Headline))
                 return ApiResponse<NewsArticleDto>.Fail("Headline is required");
 
-            // Tạo ID mới nếu không có
             if (string.IsNullOrEmpty(dto.NewsArticleId))
             {
                 dto.NewsArticleId = GenerateNewsArticleId();
             }
 
-            // Kiểm tra xem ID đã tồn tại chưa
             var exists = await _newsArticleRepository.ExistsByIdAsync(dto.NewsArticleId);
             if (exists)
                 return ApiResponse<NewsArticleDto>.Fail("News article ID already exists");
 
-            // DTO -> Entity
             var entity = dto.Adapt<NewsArticle>();
             entity.CreatedDate = DateTime.Now;
             entity.NewsStatus = entity.NewsStatus ?? true;
+
+            // Gán CreatedByID từ user hiện tại
+            var userId = _httpContextAccessor.HttpContext?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userId) && short.TryParse(userId, out var accountId))
+            {
+                entity.CreatedById = accountId;
+            }
 
             await _newsArticleRepository.AddAsync(entity);
             await _newsArticleRepository.SaveChangesAsync();
@@ -148,7 +189,6 @@ namespace Assignmen_PRN232_1.Services
 
         private async Task<ApiResponse<NewsArticleDto>> UpdateAsync(NewsArticleSaveDto dto)
         {
-            // Validate required fields
             if (string.IsNullOrWhiteSpace(dto.NewsArticleId))
                 return ApiResponse<NewsArticleDto>.Fail("News article ID is required for update");
 
@@ -159,9 +199,15 @@ namespace Assignmen_PRN232_1.Services
             if (existing == null)
                 return ApiResponse<NewsArticleDto>.Fail("News article not found");
 
-            // Mapster update object hiện tại
             dto.Adapt(existing);
             existing.ModifiedDate = DateTime.Now;
+
+            // Gán UpdatedByID từ user hiện tại
+            var userId = _httpContextAccessor.HttpContext?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userId) && short.TryParse(userId, out var accountId))
+            {
+                existing.UpdatedById = accountId;
+            }
 
             await _newsArticleRepository.UpdateAsync(existing);
             await _newsArticleRepository.SaveChangesAsync();
@@ -173,6 +219,40 @@ namespace Assignmen_PRN232_1.Services
         }
 
         #endregion
+
+        public async Task<ApiResponse<NewsArticleDto>> DuplicateAsync(string id)
+        {
+            var original = await _newsArticleRepository.GetByIdAsync(id);
+            if (original == null)
+                return ApiResponse<NewsArticleDto>.Fail("News article not found");
+
+            var duplicate = new NewsArticle
+            {
+                NewsArticleId = GenerateNewsArticleId(),
+                NewsTitle = original.NewsTitle + " (Copy)",
+                Headline = original.Headline,
+                NewsContent = original.NewsContent,
+                NewsSource = original.NewsSource,
+                CategoryId = original.CategoryId,
+                NewsStatus = original.NewsStatus,
+                CreatedDate = DateTime.Now
+            };
+
+            // Gán CreatedByID từ user hiện tại
+            var userId = _httpContextAccessor.HttpContext?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userId) && short.TryParse(userId, out var accountId))
+            {
+                duplicate.CreatedById = accountId;
+            }
+
+            await _newsArticleRepository.AddAsync(duplicate);
+            await _newsArticleRepository.SaveChangesAsync();
+
+            return ApiResponse<NewsArticleDto>.Ok(
+                duplicate.Adapt<NewsArticleDto>(),
+                "Duplicated successfully"
+            );
+        }
 
         public async Task<ApiResponse<bool>> DeleteAsync(string id)
         {

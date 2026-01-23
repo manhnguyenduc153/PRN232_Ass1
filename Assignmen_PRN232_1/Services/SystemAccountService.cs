@@ -195,6 +195,10 @@ namespace Assignmen_PRN232_1.Services
             if (account == null)
                 return ApiResponse<bool>.Fail("Account not found");
 
+            // Kiểm tra xem account đã tạo News chưa
+            if (account.NewsArticles != null && account.NewsArticles.Any())
+                return ApiResponse<bool>.Fail("Cannot delete account that has created news articles");
+
             await _systemAccountRepository.DeleteAsync(account);
             await _systemAccountRepository.SaveChangesAsync();
 

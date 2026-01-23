@@ -15,12 +15,10 @@ namespace Frontend.Services
             _httpClient.BaseAddress = new Uri("https://localhost:7053/api/");
         }
 
-        // GET: Lấy danh sách phân trang
         public async Task<PagingResponse<NewsArticleDto>> GetListPagingAsync(NewsArticleSearchDto searchDto)
         {
             try
             {
-                // Build query string
                 var queryParams = new List<string>();
                 if (searchDto.PageIndex > 0)
                     queryParams.Add($"PageIndex={searchDto.PageIndex}");
@@ -28,8 +26,18 @@ namespace Frontend.Services
                     queryParams.Add($"PageSize={searchDto.PageSize}");
                 if (!string.IsNullOrEmpty(searchDto.Keyword))
                     queryParams.Add($"Keyword={Uri.EscapeDataString(searchDto.Keyword)}");
+                if (!string.IsNullOrEmpty(searchDto.Title))
+                    queryParams.Add($"Title={Uri.EscapeDataString(searchDto.Title)}");
+                if (!string.IsNullOrEmpty(searchDto.Author))
+                    queryParams.Add($"Author={Uri.EscapeDataString(searchDto.Author)}");
                 if (searchDto.CategoryId.HasValue && searchDto.CategoryId > 0)
                     queryParams.Add($"CategoryId={searchDto.CategoryId}");
+                if (searchDto.Status.HasValue)
+                    queryParams.Add($"Status={searchDto.Status}");
+                if (searchDto.FromDate.HasValue)
+                    queryParams.Add($"FromDate={searchDto.FromDate.Value:yyyy-MM-dd}");
+                if (searchDto.ToDate.HasValue)
+                    queryParams.Add($"ToDate={searchDto.ToDate.Value:yyyy-MM-dd}");
 
                 var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
 
@@ -48,6 +56,41 @@ namespace Frontend.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in GetListPagingAsync: {ex.Message}");
+                return new PagingResponse<NewsArticleDto>();
+            }
+        }
+
+        public async Task<PagingResponse<NewsArticleDto>> GetPublicListPagingAsync(NewsArticleSearchDto searchDto)
+        {
+            try
+            {
+                var queryParams = new List<string>();
+                if (searchDto.PageIndex > 0)
+                    queryParams.Add($"PageIndex={searchDto.PageIndex}");
+                if (searchDto.PageSize > 0)
+                    queryParams.Add($"PageSize={searchDto.PageSize}");
+                if (!string.IsNullOrEmpty(searchDto.Keyword))
+                    queryParams.Add($"Keyword={Uri.EscapeDataString(searchDto.Keyword)}");
+                if (searchDto.CategoryId.HasValue && searchDto.CategoryId > 0)
+                    queryParams.Add($"CategoryId={searchDto.CategoryId}");
+
+                var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
+
+                var response = await _httpClient.GetAsync($"NewsArticles/public{queryString}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new PagingResponse<NewsArticleDto>();
+                }
+
+                var apiResponse = await response.Content
+                    .ReadFromJsonAsync<PagingResponse<NewsArticleDto>>();
+
+                return apiResponse ?? new PagingResponse<NewsArticleDto>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetPublicListPagingAsync: {ex.Message}");
                 return new PagingResponse<NewsArticleDto>();
             }
         }
@@ -122,6 +165,29 @@ namespace Frontend.Services
         }
 
         // DELETE: Xóa news article
+        public async Task<(bool Success, string Message, NewsArticleDto? Data)> DuplicateAsync(string id)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsync($"NewsArticles/{id}/duplicate", null);
+
+                var apiResponse = await response.Content
+                    .ReadFromJsonAsync<ApiResponse<NewsArticleDto>>();
+
+                if (apiResponse == null)
+                {
+                    return (false, "Failed to process response", null);
+                }
+
+                return (apiResponse.Success, apiResponse.Message ?? "", apiResponse.Data);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in DuplicateAsync: {ex.Message}");
+                return (false, $"Error: {ex.Message}", null);
+            }
+        }
+
         public async Task<(bool Success, string Message)> DeleteAsync(string id)
         {
             try

@@ -71,6 +71,14 @@ namespace Assignmen_PRN232__.Repositories
             return await ExistsAsync(c => c.CategoryName == categoryName);
         }
 
+        public async Task<bool> ExistsByNameAndParentAsync(string categoryName, short? parentCategoryId, short excludeCategoryId = 0)
+        {
+            return await ExistsAsync(c => 
+                c.CategoryName == categoryName && 
+                c.ParentCategoryId == parentCategoryId &&
+                c.CategoryId != excludeCategoryId);
+        }
+
         // Explicit implementation cho short GetById
         public Task<Category?> GetByIdAsync(short id) => GetByIdAsync<short>(id);
     }

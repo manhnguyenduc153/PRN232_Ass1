@@ -1,9 +1,11 @@
 using Assignmen_PRN232_1.Services.IServices;
 using Assignmen_PRN232__.Dto;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Assignmen_PRN232_1.Controllers.Api
 {
+    [Authorize(Roles = "Admin,Staff")]
     [ApiController]
     [Route("api/[controller]")]
     public class NewsArticlesController : ControllerBase
@@ -20,6 +22,15 @@ namespace Assignmen_PRN232_1.Controllers.Api
         public async Task<IActionResult> GetListPaging([FromQuery] NewsArticleSearchDto dto)
         {
             var result = await _newsArticleService.GetListPagingAsync(dto);
+            return Ok(result);
+        }
+
+        // GET api/newsarticles/public
+        [AllowAnonymous]
+        [HttpGet("public")]
+        public async Task<IActionResult> GetPublicListPaging([FromQuery] NewsArticleSearchDto dto)
+        {
+            var result = await _newsArticleService.GetPublicListPagingAsync(dto);
             return Ok(result);
         }
 
@@ -46,6 +57,14 @@ namespace Assignmen_PRN232_1.Controllers.Api
         public async Task<IActionResult> CreateOrEdit([FromBody] NewsArticleSaveDto dto)
         {
             var response = await _newsArticleService.CreateOrEditAsync(dto);
+            return StatusCode(response.StatusCode, response);
+        }
+
+        // POST api/newsarticles/{id}/duplicate
+        [HttpPost("{id}/duplicate")]
+        public async Task<IActionResult> Duplicate(string id)
+        {
+            var response = await _newsArticleService.DuplicateAsync(id);
             return StatusCode(response.StatusCode, response);
         }
 

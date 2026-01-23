@@ -26,6 +26,8 @@ namespace Assignmen_PRN232__.Dto
 
         public short? CreatedById { get; set; }
 
+        public string? CreatedByName { get; set; }
+
         public short? UpdatedById { get; set; }
 
         public DateTime? ModifiedDate { get; set; }
@@ -60,6 +62,10 @@ namespace Assignmen_PRN232__.Dto
 
     public class NewsArticleSearchDto : BaseSearchDto
     {
+        public string? Title { get; set; }
+        public string? Author { get; set; }
         public short? CategoryId { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
     }
 }

@@ -33,6 +33,8 @@ namespace Frontend.Services
 
                 var response = await _httpClient.GetAsync($"SystemAccounts{queryString}");
 
+                Console.WriteLine($"GetListPaging Response Status: {response.StatusCode}");
+
                 if (!response.IsSuccessStatusCode)
                 {
                     return new PagingResponse<SystemAccountDto>();

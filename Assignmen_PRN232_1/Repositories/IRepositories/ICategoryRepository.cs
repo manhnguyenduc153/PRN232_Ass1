@@ -14,6 +14,7 @@ namespace Assignmen_PRN232__.Repositories.IRepositories
         Task UpdateAsync(Category category);
         Task DeleteAsync(Category category);
         Task<bool> ExistsByNameAsync(string categoryName);
+        Task<bool> ExistsByNameAndParentAsync(string categoryName, short? parentCategoryId, short excludeCategoryId = 0);
         Task<int> SaveChangesAsync();
     }
 }

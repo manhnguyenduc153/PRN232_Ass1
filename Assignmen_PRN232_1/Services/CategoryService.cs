@@ -63,11 +63,10 @@ namespace Assignmen_PRN232_1.Services
 
         private async Task<ApiResponse<CategoryDto>> CreateAsync(CategorySaveDto dto)
         {
-            // Check duplicate name
-            if (await _categoryRepository.ExistsByNameAsync(dto.CategoryName))
-                return ApiResponse<CategoryDto>.Fail("Category name already exists");
+            // Kiểm tra trùng Category cùng Parent
+            if (await _categoryRepository.ExistsByNameAndParentAsync(dto.CategoryName, dto.ParentCategoryId))
+                return ApiResponse<CategoryDto>.Fail("Category name already exists with the same parent");
 
-            // DTO -> Entity
             var entity = dto.Adapt<Category>();
 
             await _categoryRepository.AddAsync(entity);
@@ -85,7 +84,14 @@ namespace Assignmen_PRN232_1.Services
             if (existing == null)
                 return ApiResponse<CategoryDto>.Fail("Category not found");
 
-            // Mapster update object hiện tại
+            // Kiểm tra trùng Category cùng Parent (trừ chính nó)
+            if (await _categoryRepository.ExistsByNameAndParentAsync(dto.CategoryName, dto.ParentCategoryId, dto.CategoryId))
+                return ApiResponse<CategoryDto>.Fail("Category name already exists with the same parent");
+
+            // Không đổi ParentCategory nếu đã có News
+            if (existing.ParentCategoryId != dto.ParentCategoryId && existing.NewsArticles != null && existing.NewsArticles.Any())
+                return ApiResponse<CategoryDto>.Fail("Cannot change parent category when category has news articles");
+
             dto.Adapt(existing);
 
             await _categoryRepository.UpdateAsync(existing);
@@ -104,6 +110,10 @@ namespace Assignmen_PRN232_1.Services
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category == null)
                 return ApiResponse<bool>.Fail("Category not found");
+
+            // Không xoá nếu đã dùng trong News
+            if (category.NewsArticles != null && category.NewsArticles.Any())
+                return ApiResponse<bool>.Fail("Cannot delete category that has news articles");
 
             await _categoryRepository.DeleteAsync(category);
             await _categoryRepository.SaveChangesAsync();

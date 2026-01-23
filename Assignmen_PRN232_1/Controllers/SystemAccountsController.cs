@@ -1,9 +1,15 @@
+﻿using Assignmen_PRN232__.Dto;
+using Assignmen_PRN232__.Enums;
 using Assignmen_PRN232_1.Services.IServices;
-using Assignmen_PRN232__.Dto;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Assignmen_PRN232_1.Controllers.Api
 {
+    [Authorize(Roles = "Admin")]
     [ApiController]
     [Route("api/[controller]")]
     public class SystemAccountsController : ControllerBase
@@ -58,10 +64,35 @@ namespace Assignmen_PRN232_1.Controllers.Api
         }
 
         // POST api/systemaccounts/login
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] SystemAccountLoginDto dto)
         {
             var response = await _systemAccountService.LoginAsync(dto);
+
+            if (!response.Success)
+                return StatusCode(response.StatusCode, response);
+
+            var account = response.Data;
+
+            // 👉 Tạo claims
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, account.AccountId.ToString()),
+                new Claim(ClaimTypes.Name, account.AccountEmail),
+                new Claim(ClaimTypes.Role, ((AccountRole)account.AccountRole.GetValueOrDefault()).ToString())
+            };
+
+            var identity = new ClaimsIdentity(
+                claims,
+                CookieAuthenticationDefaults.AuthenticationScheme);
+
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal);
+
             return StatusCode(response.StatusCode, response);
         }
     }

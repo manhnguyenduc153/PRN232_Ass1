@@ -9,20 +9,49 @@ namespace UsersApp.Extensions
     {
         public static void RegisterCustomServices(this IServiceCollection services)
         {
-            //Tag Services
-            services.AddHttpClient<ITagService, TagService>();
+            var cookieContainer = new System.Net.CookieContainer();
             
-            //Category Services
-            services.AddHttpClient<ICategoryService, CategoryService>();
+            services.AddHttpClient<ITagService, TagService>()
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                {
+                    UseCookies = true,
+                    CookieContainer = cookieContainer
+                });
             
-            //NewsArticle Services
-            services.AddHttpClient<INewsArticleService, NewsArticleService>();
+            services.AddHttpClient<ICategoryService, CategoryService>()
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                {
+                    UseCookies = true,
+                    CookieContainer = cookieContainer
+                });
             
-            //SystemAccount Services
-            services.AddHttpClient<ISystemAccountService, SystemAccountService>();
+            services.AddHttpClient<INewsArticleService, NewsArticleService>()
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                {
+                    UseCookies = true,
+                    CookieContainer = cookieContainer
+                });
+            
+            services.AddHttpClient<ISystemAccountService, SystemAccountService>()
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                {
+                    UseCookies = true,
+                    CookieContainer = cookieContainer
+                });
 
-            //Login Services
-            services.AddHttpClient<ILoginService, LoginService>();
+            services.AddHttpClient<ILoginService, LoginService>()
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                {
+                    UseCookies = true,
+                    CookieContainer = cookieContainer
+                });
+
+            services.AddHttpClient<IReportService, ReportService>()
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                {
+                    UseCookies = true,
+                    CookieContainer = cookieContainer
+                });
         }
     }
 }

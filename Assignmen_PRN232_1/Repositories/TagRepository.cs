@@ -52,7 +52,12 @@ namespace Assignmen_PRN232__.Repositories
         }
 
         // Explicit implementation cho int GetById
-        public Task<Tag?> GetByIdAsync(int id) => GetByIdAsync<int>(id);
+        public async Task<Tag?> GetByIdAsync(int id)
+        {
+            return await _dbContext.Set<Tag>()
+                .Include(x => x.NewsArticles)
+                .FirstOrDefaultAsync(x => x.TagId == id);
+        }
     }
 
 }
