@@ -95,6 +95,7 @@ namespace Assignmen_PRN232__.Repositories
         {
             return await _dbContext.Set<NewsArticle>()
                 .Include(x => x.Tags)
+                .Include(x => x.Category)
                 .Include(x => x.CreatedBy)
                 .FirstOrDefaultAsync(x => x.NewsArticleId == id);
         }

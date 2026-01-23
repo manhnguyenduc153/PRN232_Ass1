@@ -22,9 +22,6 @@
             <div class="sidebar-title">ADMIN</div>
 
             <nav class="sidebar-nav">
-                <a href="/" class="nav-link">
-                    <i class="bi bi-house"></i> Dashboard
-                </a>
                 <a href="/PublicNews" class="nav-link">
                     <i class="bi bi-newspaper"></i> Public News
                 </a>
@@ -34,26 +31,35 @@
                     var isLoggedIn = Context.Request.Cookies.ContainsKey("IsAuthenticated") && Context.Request.Cookies["IsAuthenticated"] == "true";
                     var userName = isLoggedIn ? Context.Request.Cookies["UserName"] : null;
                     var userEmail = isLoggedIn ? Context.Request.Cookies["UserEmail"] : null;
+                    var userRole = isLoggedIn ? Context.Request.Cookies["UserRole"] : null;
                 }
 
                 @if (isLoggedIn)
                 {
                     <div class="sidebar-subtitle">Management</div>
-                    <a href="/Tag" class="nav-link">
-                        <i class="bi bi-tags"></i> Tags
-                    </a>
-                    <a href="/Category" class="nav-link">
-                        <i class="bi bi-list"></i> Categories
-                    </a>
-                    <a href="/NewsArticle" class="nav-link">
-                        <i class="bi bi-newspaper"></i> News Articles
-                    </a>
-                    <a href="/SystemAccount" class="nav-link">
-                        <i class="bi bi-people"></i> System Accounts
-                    </a>
-                    <a href="/Report" class="nav-link">
-                        <i class="bi bi-bar-chart-line"></i> Reports
-                    </a>
+                    
+                    @if (userRole == "Admin")
+                    {
+                        <a href="/SystemAccount" class="nav-link">
+                            <i class="bi bi-people"></i> System Accounts
+                        </a>
+                        <a href="/NewsArticle" class="nav-link">
+                            <i class="bi bi-newspaper"></i> News Articles
+                        </a>
+                        <a href="/Report" class="nav-link">
+                            <i class="bi bi-bar-chart-line"></i> Reports
+                        </a>
+                    }
+                    
+                    @if (userRole == "Staff")
+                    {
+                        <a href="/Category" class="nav-link">
+                            <i class="bi bi-list"></i> Categories
+                        </a>
+                        <a href="/Tag" class="nav-link">
+                            <i class="bi bi-tags"></i> Tags
+                        </a>
+                    }
                     
                     <hr class="sidebar-divider my-2">
                     <div class="sidebar-user-info">

@@ -291,17 +291,14 @@ namespace Assignmen_PRN232_1.Services
 
         public async Task<ApiResponse<bool>> RemoveTagAsync(string newsArticleId, int tagId)
         {
-            // Kiểm tra NewsArticle tồn tại
             var newsArticle = await _newsArticleRepository.GetByIdAsync(newsArticleId);
             if (newsArticle == null)
                 return ApiResponse<bool>.Fail("News article not found");
 
-            // Kiểm tra tag có trong article không
             var tagToRemove = newsArticle.Tags.FirstOrDefault(x => x.TagId == tagId);
             if (tagToRemove == null)
                 return ApiResponse<bool>.Fail("Tag not found in this article");
 
-            // Xóa tag
             newsArticle.Tags.Remove(tagToRemove);
 
             await _newsArticleRepository.UpdateAsync(newsArticle);
